@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IELTS Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f13;
+    --surface: #1a1a22;
+    --surface2: #22222e;
+    --border: #2e2e3e;
+    --accent: #7c6aff;
+    --accent2: #ff6a8a;
+    --correct: #3dd68c;
+    --wrong: #ff5c72;
+    --text: #e8e8f0;
+    --muted: #7a7a9a;
+    --timer-warn: #ffb347;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background-image: radial-gradient(ellipse at 20% 20%, rgba(124,106,255,0.08) 0%, transparent 60%),
+                      radial-gradient(ellipse at 80% 80%, rgba(255,106,138,0.06) 0%, transparent 60%);
+  }
+
+  .container {
+    width: 100%;
+    max-width: 720px;
+  }
+
+  /* HEADER */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.3rem;
+    letter-spacing: -0.02em;
+  }
+  .logo span { color: var(--accent); }
+
+  .timer-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.8rem;
+    color: var(--muted);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .toggle-switch {
+    width: 40px; height: 22px;
+    background: var(--border);
+    border-radius: 11px;
+    position: relative;
+    transition: background 0.25s;
+  }
+  .toggle-switch.on { background: var(--accent); }
+  .toggle-switch::after {
+    content: '';
+    width: 16px; height: 16px;
+    background: #fff;
+    border-radius: 50%;
+    position: absolute;
+    top: 3px; left: 3px;
+    transition: left 0.25s;
+  }
+  .toggle-switch.on::after { left: 21px; }
+
+  /* PROGRESS */
+  .progress-bar-wrap {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-bottom: 28px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  /* CARD */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+
+  .q-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .q-number {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* TIMER RING */
+  .timer-ring {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .ring-wrap {
+    position: relative;
+    width: 44px; height: 44px;
+  }
+  .ring-wrap svg {
+    position: absolute;
+    top: 0; left: 0;
+    transform: rotate(-90deg);
+  }
+  .ring-bg { fill: none; stroke: var(--border); stroke-width: 3; }
+  .ring-fg {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-dasharray: 113;
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 1s linear, stroke 0.3s;
+  }
+  .ring-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+
+  .question-text {
+    font-size: 1.1rem;
+    line-height: 1.65;
+    margin-bottom: 28px;
+    font-weight: 400;
+  }
+
+  /* OPTIONS */
+  .options { display: flex; flex-direction: column; gap: 10px; }
+
+  .option {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    user-select: none;
+  }
+  .option:hover:not(.disabled) {
+    border-color: var(--accent);
+    transform: translateX(3px);
+  }
+  .option.selected { border-color: var(--accent); background: rgba(124,106,255,0.1); }
+  .option.correct  { border-color: var(--correct); background: rgba(61,214,140,0.1); }
+  .option.wrong    { border-color: var(--wrong);   background: rgba(255,92,114,0.1); }
+  .option.disabled { cursor: default; }
+
+  .opt-label {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    background: var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.78rem;
+    flex-shrink: 0;
+    transition: background 0.2s, color 0.2s;
+  }
+  .option.correct .opt-label { background: var(--correct); color: #0f0f13; }
+  .option.wrong   .opt-label { background: var(--wrong);   color: #fff; }
+  .option.selected:not(.correct):not(.wrong) .opt-label { background: var(--accent); color: #fff; }
+
+  .opt-text { font-size: 0.95rem; line-height: 1.4; }
+
+  /* EXPLANATION */
+  .explanation {
+    margin-top: 20px;
+    padding: 16px 20px;
+    background: rgba(124,106,255,0.07);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 10px 10px 0;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: #c5c5e0;
+    display: none;
+    animation: fadeIn 0.3s ease;
+  }
+  .explanation.show { display: block; }
+  .explanation strong { color: var(--accent); font-weight: 600; }
+
+  @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+  /* NEXT BUTTON */
+  .btn-next {
+    margin-top: 24px;
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, var(--accent), #9b8eff);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    display: none;
+    transition: opacity 0.2s, transform 0.15s;
+  }
+  .btn-next:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-next.show { display: block; animation: fadeIn 0.3s ease; }
+
+  /* RESULT SCREEN */
+  .result-screen {
+    text-align: center;
+    padding: 20px 0;
+    display: none;
+  }
+  .result-screen.show { display: block; animation: fadeIn 0.5s ease; }
+
+  .score-ring {
+    width: 130px; height: 130px;
+    margin: 0 auto 24px;
+    position: relative;
+  }
+  .score-ring svg { transform: rotate(-90deg); }
+  .score-ring-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .score-pct {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .score-sub { font-size: 0.7rem; color: var(--muted); margin-top: 3px; }
+
+  .result-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .result-desc { color: var(--muted); font-size: 0.9rem; margin-bottom: 28px; }
+
+  .result-stats {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 32px;
+  }
+  .stat-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 24px;
+    min-width: 90px;
+  }
+  .stat-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 800;
+  }
+  .stat-val.green { color: var(--correct); }
+  .stat-val.red   { color: var(--wrong); }
+  .stat-label { font-size: 0.75rem; color: var(--muted); margin-top: 3px; }
+
+  .btn-restart {
+    padding: 14px 36px;
+    background: linear-gradient(135deg, var(--accent), #9b8eff);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .btn-restart:hover { opacity: 0.9; }
+
+  /* TIME UP flash */
+  @keyframes flashWarn {
+    0%,100% { border-color: var(--border); }
+    50% { border-color: var(--timer-warn); box-shadow: 0 0 20px rgba(255,179,71,0.2); }
+  }
+  .time-up-flash { animation: flashWarn 0.5s ease 3; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo">IELTS <span>Quiz</span></div>
+    <div class="timer-toggle" onclick="toggleTimer()">
+      <div class="toggle-switch on" id="timerToggle"></div>
+      <span id="timerLabel">Timer ON</span>
+    </div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-bar-wrap">
+    <div class="progress-bar" id="progressBar" style="width:0%"></div>
+  </div>
+
+  <!-- QUIZ CARD -->
+  <div class="card" id="quizCard">
+    <div class="q-meta">
+      <div class="q-number" id="qNumber">Question 1 / 10</div>
+      <div class="timer-ring" id="timerRing">
+        <div class="ring-wrap">
+          <svg width="44" height="44" viewBox="0 0 44 44">
+            <circle class="ring-bg" cx="22" cy="22" r="18"/>
+            <circle class="ring-fg" id="ringFg" cx="22" cy="22" r="18"/>
+          </svg>
+          <div class="ring-text" id="ringText">40</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="question-text" id="questionText"></div>
+    <div class="options" id="optionsWrap"></div>
+    <div class="explanation" id="explanation"></div>
+    <button class="btn-next" id="btnNext" onclick="nextQuestion()">Next Question →</button>
+  </div>
+
+  <!-- RESULT SCREEN -->
+  <div class="card result-screen" id="resultScreen">
+    <div class="score-ring">
+      <svg width="130" height="130" viewBox="0 0 130 130">
+        <circle fill="none" stroke="#2e2e3e" stroke-width="8" cx="65" cy="65" r="56"/>
+        <circle fill="none" stroke="url(#grad)" stroke-width="8" cx="65" cy="65" r="56"
+          stroke-linecap="round"
+          id="scoreCircle"
+          stroke-dasharray="351.86"
+          stroke-dashoffset="351.86"/>
+        <defs>
+          <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#7c6aff"/>
+            <stop offset="100%" stop-color="#ff6a8a"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="score-ring-text">
+        <div class="score-pct" id="scorePct">0%</div>
+        <div class="score-sub">SCORE</div>
+      </div>
+    </div>
+
+    <div class="result-title" id="resultTitle">Well done!</div>
+    <div class="result-desc" id="resultDesc"></div>
+
+    <div class="result-stats">
+      <div class="stat-box">
+        <div class="stat-val green" id="statCorrect">0</div>
+        <div class="stat-label">Correct</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val red" id="statWrong">0</div>
+        <div class="stat-label">Wrong</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="statTotal">0</div>
+        <div class="stat-label">Total</div>
+      </div>
+    </div>
+
+    <button class="btn-restart" onclick="restartQuiz()">Try Again</button>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// 👇 PASTE YOUR 1000 QUESTIONS HERE
+// Format: { q, opts: [A,B,C,D], ans (0-based index), exp }
+// ============================================================
+const ALL_QUESTIONS = [
+  {
+    q: "The graph shows a ______ increase in the number of online learners over the past decade.",
+    opts: ["dramatic", "dramatical", "drama", "dramatize"],
+    ans: 0,
+    exp: "\"Dramatic\" is the correct adjective to modify the noun \"increase\". \"Dramatical\" is not a standard English word. \"Drama\" is a noun, and \"dramatize\" is a verb."
+  },
+  {
+    q: "The government ______ a new policy to tackle unemployment last year.",
+    opts: ["implement", "implemented", "implementing", "has implemented"],
+    ans: 1,
+    exp: "\"Last year\" signals simple past tense, so \"implemented\" is correct. \"Has implemented\" (present perfect) would be used without a specific past time reference."
+  },
+  {
+    q: "Despite the challenges, the team managed to ______ their initial targets.",
+    opts: ["exceed", "access", "success", "process"],
+    ans: 0,
+    exp: "\"Exceed\" means to go beyond a limit or target — the most appropriate word here. \"Access\", \"success\" (noun), and \"process\" don't fit the context grammatically or semantically."
+  },
+  {
+    q: "The study ______ that regular exercise can significantly reduce stress levels.",
+    opts: ["suggests", "suggestion", "suggested", "suggesting"],
+    ans: 0,
+    exp: "The subject \"The study\" requires a verb. In academic writing, present tense (\"suggests\") is used to report findings that are still considered valid."
+  },
+  {
+    q: "Water scarcity is one of the most ______ environmental issues facing developing nations.",
+    opts: ["press", "pressed", "pressing", "pressure"],
+    ans: 2,
+    exp: "\"Pressing\" as an adjective means urgent or demanding immediate attention. This is common collocations: \"pressing issue/problem/concern\" in IELTS academic writing."
+  },
+  {
+    q: "The findings of the report were ______ consistent with previous research.",
+    opts: ["large", "largely", "largest", "enlarge"],
+    ans: 1,
+    exp: "An adverb (\"largely\") is needed to modify the adjective \"consistent\". \"Large\" is an adjective, \"largest\" is a superlative adjective, and \"enlarge\" is a verb."
+  },
+  {
+    q: "The new law aims to ______ discrimination in the workplace.",
+    opts: ["eliminate", "elimination", "eliminates", "eliminated"],
+    ans: 0,
+    exp: "After \"to\" (infinitive marker), the base form of the verb is required. \"Eliminate\" is the base form. This tests verb form after modal/semi-modal structures."
+  },
+  {
+    q: "Many researchers argue that poverty and crime are closely ______.",
+    opts: ["linked", "linking", "link", "links"],
+    ans: 0,
+    exp: "\"Closely linked\" is a common collocation in academic writing meaning closely connected. The passive participial adjective \"linked\" is correct after the verb \"are\"."
+  },
+  {
+    q: "The survey revealed a ______ gap between the rich and the poor.",
+    opts: ["grow", "growing", "grown", "grew"],
+    ans: 1,
+    exp: "\"Growing\" as a participial adjective modifies \"gap\", meaning the gap is increasing. This is a common academic collocation: \"growing gap/concern/evidence\"."
+  },
+  {
+    q: "It is ______ that all applicants submit their documents before the deadline.",
+    opts: ["essential", "essence", "essentially", "essentiality"],
+    ans: 0,
+    exp: "The structure \"It is + adjective + that\" requires an adjective. \"Essential\" fits perfectly. \"Essentially\" is an adverb, \"essence\" is a noun, and \"essentiality\" is rarely used."
+  }
+];
+// ============================================================
+
+const TIME_PER_Q = 40;
+let questions = [];
+let current = 0;
+let score = 0;
+let answered = false;
+let timerOn = true;
+let timerInterval = null;
+let timeLeft = TIME_PER_Q;
+
+function shuffle(arr) {
+  return [...arr].sort(() => Math.random() - 0.5);
+}
+
+function startQuiz() {
+  questions = shuffle(ALL_QUESTIONS);
+  current = 0;
+  score = 0;
+  document.getElementById('quizCard').style.display = '';
+  document.getElementById('resultScreen').classList.remove('show');
+  loadQuestion();
+}
+
+function loadQuestion() {
+  answered = false;
+  const q = questions[current];
+  const total = questions.length;
+
+  document.getElementById('qNumber').textContent = `Question ${current + 1} / ${total}`;
+  document.getElementById('progressBar').style.width = `${(current / total) * 100}%`;
+  document.getElementById('questionText').textContent = q.q;
+  document.getElementById('explanation').className = 'explanation';
+  document.getElementById('explanation').innerHTML = '';
+  document.getElementById('btnNext').className = 'btn-next';
+
+  // Options
+  const wrap = document.getElementById('optionsWrap');
+  wrap.innerHTML = '';
+  const labels = ['A', 'B', 'C', 'D'];
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'option';
+    div.innerHTML = `<div class="opt-label">${labels[i]}</div><div class="opt-text">${opt}</div>`;
+    div.onclick = () => selectAnswer(i, div);
+    wrap.appendChild(div);
+  });
+
+  // Timer
+  clearInterval(timerInterval);
+  if (timerOn) {
+    timeLeft = TIME_PER_Q;
+    updateRing(timeLeft);
+    document.getElementById('timerRing').style.display = 'flex';
+    timerInterval = setInterval(() => {
+      timeLeft--;
+      updateRing(timeLeft);
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        if (!answered) timeUpAutoAnswer();
+      }
+    }, 1000);
+  } else {
+    document.getElementById('timerRing').style.display = 'none';
+  }
+}
+
+function updateRing(t) {
+  const circumference = 113;
+  const fraction = Math.max(t / TIME_PER_Q, 0);
+  const offset = circumference * (1 - fraction);
+  const fg = document.getElementById('ringFg');
+  fg.style.strokeDashoffset = offset;
+  document.getElementById('ringText').textContent = t;
+
+  if (t <= 10) {
+    fg.style.stroke = 'var(--wrong)';
+    document.getElementById('ringText').style.color = 'var(--wrong)';
+  } else if (t <= 20) {
+    fg.style.stroke = 'var(--timer-warn)';
+    document.getElementById('ringText').style.color = 'var(--timer-warn)';
+  } else {
+    fg.style.stroke = 'var(--accent)';
+    document.getElementById('ringText').style.color = 'var(--text)';
+  }
+}
+
+function timeUpAutoAnswer() {
+  answered = true;
+  const q = questions[current];
+  const opts = document.querySelectorAll('.option');
+  opts.forEach((el, i) => {
+    el.classList.add('disabled');
+    if (i === q.ans) el.classList.add('correct');
+  });
+  document.getElementById('quizCard').classList.add('time-up-flash');
+  setTimeout(() => document.getElementById('quizCard').classList.remove('time-up-flash'), 1600);
+  showExplanation(q);
+  document.getElementById('btnNext').className = 'btn-next show';
+}
+
+function selectAnswer(index, el) {
+  if (answered) return;
+  answered = true;
+  clearInterval(timerInterval);
+
+  const q = questions[current];
+  const opts = document.querySelectorAll('.option');
+  opts.forEach(o => o.classList.add('disabled'));
+
+  if (index === q.ans) {
+    el.classList.add('correct');
+    score++;
+  } else {
+    el.classList.add('wrong');
+    opts[q.ans].classList.add('correct');
+  }
+
+  showExplanation(q);
+  document.getElementById('btnNext').className = 'btn-next show';
+}
+
+function showExplanation(q) {
+  const expEl = document.getElementById('explanation');
+  expEl.innerHTML = `<strong>Explanation:</strong> ${q.exp}`;
+  expEl.className = 'explanation show';
+}
+
+function nextQuestion() {
+  current++;
+  if (current >= questions.length) {
+    showResult();
+  } else {
+    loadQuestion();
+  }
+}
+
+function showResult() {
+  clearInterval(timerInterval);
+  document.getElementById('quizCard').style.display = 'none';
+  const total = questions.length;
+  const pct = Math.round((score / total) * 100);
+
+  document.getElementById('scorePct').textContent = pct + '%';
+  document.getElementById('statCorrect').textContent = score;
+  document.getElementById('statWrong').textContent = total - score;
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('progressBar').style.width = '100%';
+
+  let title, desc;
+  if (pct >= 80) { title = '🏆 Excellent!'; desc = 'Outstanding performance. You\'re well prepared for IELTS!'; }
+  else if (pct >= 60) { title = '👍 Good Job!'; desc = 'Solid score. Review the questions you missed and keep practicing.'; }
+  else if (pct >= 40) { title = '📚 Keep Going!'; desc = 'You\'re making progress. Focus on weak areas and try again.'; }
+  else { title = '💪 Keep Practicing!'; desc = 'Don\'t give up — review the explanations and try once more.'; }
+
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultDesc').textContent = desc;
+
+  const circumference = 351.86;
+  const offset = circumference * (1 - pct / 100);
+  const circle = document.getElementById('scoreCircle');
+
+  document.getElementById('resultScreen').classList.add('show');
+  setTimeout(() => {
+    circle.style.transition = 'stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1)';
+    circle.style.strokeDashoffset = offset;
+  }, 200);
+}
+
+function restartQuiz() {
+  document.getElementById('quizCard').style.display = '';
+  document.getElementById('scoreCircle').style.transition = 'none';
+  document.getElementById('scoreCircle').style.strokeDashoffset = '351.86';
+  startQuiz();
+}
+
+function toggleTimer() {
+  timerOn = !timerOn;
+  const toggle = document.getElementById('timerToggle');
+  toggle.className = 'toggle-switch' + (timerOn ? ' on' : '');
+  document.getElementById('timerLabel').textContent = timerOn ? 'Timer ON' : 'Timer OFF';
+  if (!answered) {
+    if (timerOn) {
+      timeLeft = TIME_PER_Q;
+      updateRing(timeLeft);
+      document.getElementById('timerRing').style.display = 'flex';
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        updateRing(timeLeft);
+        if (timeLeft <= 0) { clearInterval(timerInterval); if (!answered) timeUpAutoAnswer(); }
+      }, 1000);
+    } else {
+      clearInterval(timerInterval);
+      document.getElementById('timerRing').style.display = 'none';
+    }
+  }
+}
+
+// Start
+startQuiz();
+</script>
+</body>
+</html>
